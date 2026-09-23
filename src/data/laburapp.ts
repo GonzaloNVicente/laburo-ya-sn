@@ -70,6 +70,18 @@ export const workers = [
 ] as const;
 export const jobs = [
   {
+    id: 0,
+    title: "",
+    trade: "",
+    zone: "",
+    timing: "",
+    price: 0,
+    image: electricidad,
+    client: "",
+    phone: "",
+    detail: "",
+  },
+  {
     id: 1,
     title: "Cambiar tomas y revisar térmica",
     trade: "Electricidad",
