@@ -9,7 +9,7 @@ import {
   ChevronRight,
   Clock3,
   FileText,
-  Home,
+  Hammer,
   MapPin,
   MessageCircle,
   Phone,
@@ -609,7 +609,7 @@ function Summary({
   trade: string;
   zone: string;
   timing: string;
-  price?: number;
+  price: number | undefined;
 }) {
   return (
     <div className="summary">

@@ -29,7 +29,7 @@ export const trades = [
   { name: "Limpieza", icon: Sparkles, tone: "bg-trade-pink" },
   { name: "Fletes", icon: Truck, tone: "bg-trade-violet" },
   { name: "Otro", icon: CircleEllipsis, tone: "bg-trade-neutral" },
-];
+] as const;
 export const workers = [
   {
     id: 1,
@@ -67,7 +67,7 @@ export const workers = [
     image: plomeria,
     invoice: true,
   },
-];
+] as const;
 export const jobs = [
   {
     id: 1,
