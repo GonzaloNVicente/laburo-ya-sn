@@ -811,7 +811,10 @@ function ApplicationSummary({
       <div>
         <span className="trade-pill">{trade}</span>
         <strong>{description}</strong>
-        <span><MapPin />{zone}</span>
+        <span>
+          <MapPin />
+          {zone}
+        </span>
       </div>
     </article>
   );
