@@ -622,6 +622,19 @@
 .worker-info > span {
   color: var(--color-muted-foreground);
 }
+.verified-label {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-primary) !important;
+  font-size: 14px;
+  font-weight: 900;
+}
+.verified-label svg {
+  width: 17px;
+  height: 17px;
+}
 .worker-meta {
   display: flex;
   flex-wrap: wrap;
@@ -837,6 +850,42 @@
 .status.won {
   background: var(--color-whatsapp);
   color: var(--color-whatsapp-foreground);
+}
+.application-summary {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-secondary);
+}
+.application-summary img {
+  width: 92px;
+  height: 92px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+}
+.application-summary > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+}
+.application-summary strong {
+  line-height: 1.2;
+}
+.application-summary > div > span:last-child {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-muted-foreground);
+  font-size: 14px;
+}
+.application-summary svg {
+  width: 17px;
+  height: 17px;
 }
 .whatsapp-link {
   min-height: 58px;
