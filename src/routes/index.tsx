@@ -50,6 +50,7 @@ type Screen =
   | "trade"
   | "photos"
   | "place"
+  | "when"
   | "budget"
   | "published"
   | "applicants"
@@ -69,6 +70,7 @@ function Laburapp() {
   const [role, setRole] = useState<Role>("client");
   const [history, setHistory] = useState<Screen[]>([]);
   const [trade, setTrade] = useState("Electricidad");
+  const [workerTrades, setWorkerTrades] = useState<string[]>(["Electricidad"]);
   const [zone, setZone] = useState("Centro");
   const [timing, setTiming] = useState("Esta semana");
   const [description, setDescription] = useState("Cambiar tres tomas y revisar la térmica");
@@ -83,7 +85,7 @@ function Laburapp() {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
-  const currentJob = jobs.find((item) => item.id === jobId) ?? jobs[0];
+  const currentJob = jobs.find((item) => item.id === jobId) ?? jobs[1];
   const go = (next: Screen) => {
     setHistory((old) => [...old, screen]);
     setScreen(next);
@@ -98,9 +100,35 @@ function Laburapp() {
   };
   const start = (nextRole: Role) => {
     setRole(nextRole);
-    go("phone");
+    go(nextRole === "client" ? "trade" : "phone");
   };
-  const afterLogin = () => go(role === "client" ? "trade" : "workerName");
+  const afterLogin = () => go(role === "client" ? "published" : "workerName");
+  const examples: Record<string, string> = {
+    Pintura: "Pintar el frente de casa",
+    Electricidad: "Cambiar tres tomas y revisar la térmica",
+    Plomería: "Arreglar una pérdida bajo la mesada",
+    Gas: "Revisar la conexión de la cocina",
+    Albañilería: "Reparar una pared con humedad",
+    Carpintería: "Arreglar una puerta que no cierra",
+    Herrería: "Reparar la reja del frente",
+    Jardinería: "Cortar el pasto y podar plantas",
+    Limpieza: "Hacer una limpieza profunda",
+    Fletes: "Llevar un sillón dentro de la ciudad",
+    Otro: "Contá brevemente qué necesitás",
+  };
+  const chooseClientTrade = (value: string) => {
+    setTrade(value);
+    setDescription(examples[value] ?? examples.Otro);
+    go("photos");
+  };
+  const toggleWorkerTrade = (value: string) =>
+    setWorkerTrades((old) =>
+      old.includes(value)
+        ? old.length > 1
+          ? old.filter((item) => item !== value)
+          : old
+        : [...old, value],
+    );
   const onPhotos = (event: ChangeEvent<HTMLInputElement>) => {
     const selected = Array.from(event.target.files ?? [])
       .slice(0, 3 - photos.length)
@@ -115,7 +143,8 @@ function Laburapp() {
           code: "Te mandamos un código",
           trade: "¿Qué trabajo necesitás?",
           photos: "Mostranos qué hay que hacer",
-          place: "¿Dónde y para cuándo?",
+          place: "¿En qué zona?",
+          when: "¿Para cuándo?",
           budget: "¿Cuánto ofrecés?",
           applicants: "3 trabajadores se postularon",
           rating: "¿Cómo trabajó Carlos?",
@@ -176,13 +205,16 @@ function Laburapp() {
     if (screen === "trade" || screen === "workerTrade")
       return (
         <FormScreen hint={screen === "trade" ? "Tocá una opción." : "Elegí tu oficio principal."}>
-          <TradeGrid selected={trade} onSelect={setTrade} />
-          <BottomAction
-            onClick={() => go(screen === "trade" ? "photos" : "workerProfile")}
-            icon={<ChevronRight />}
-          >
-            Seguir
-          </BottomAction>
+          {screen === "trade" ? (
+            <TradeGrid selected={[trade]} onSelect={chooseClientTrade} />
+          ) : (
+            <>
+              <TradeGrid selected={workerTrades} onSelect={toggleWorkerTrade} />
+              <BottomAction onClick={() => go("workerProfile")} icon={<ChevronRight />}>
+                Seguir
+              </BottomAction>
+            </>
+          )}
         </FormScreen>
       );
     if (screen === "photos")
@@ -224,12 +256,28 @@ function Laburapp() {
       return (
         <FormScreen>
           <FieldLabel icon={<MapPin />}>Zona</FieldLabel>
-          <ChoiceList options={zones} value={zone} onSelect={setZone} />
+          <ChoiceList
+            options={zones}
+            value={zone}
+            onSelect={(value) => {
+              setZone(value);
+              go("when");
+            }}
+          />
+        </FormScreen>
+      );
+    if (screen === "when")
+      return (
+        <FormScreen>
           <FieldLabel icon={<Clock3 />}>¿Para cuándo?</FieldLabel>
-          <ChoiceList options={timings} value={timing} onSelect={setTiming} />
-          <BottomAction onClick={() => go("budget")} icon={<ChevronRight />}>
-            Seguir
-          </BottomAction>
+          <ChoiceList
+            options={timings}
+            value={timing}
+            onSelect={(value) => {
+              setTiming(value);
+              go("budget");
+            }}
+          />
         </FormScreen>
       );
     if (screen === "budget")
@@ -252,7 +300,7 @@ function Laburapp() {
             timing={timing}
             price={budget ? Number(budget) : undefined}
           />
-          <BottomAction onClick={() => go("published")} icon={<Send />}>
+          <BottomAction onClick={() => go("phone")} icon={<Send />}>
             Publicar trabajo
           </BottomAction>
         </FormScreen>
@@ -262,7 +310,7 @@ function Laburapp() {
         <Success
           icon={<Check />}
           title="¡Trabajo publicado!"
-          text="Te avisamos cuando un trabajador se postule."
+          text="Te avisamos por WhatsApp cuando alguien se postule."
           action="Ver postulaciones"
           onAction={() => go("applicants")}
         />
@@ -270,8 +318,19 @@ function Laburapp() {
     if (screen === "applicants")
       return (
         <div className="stack">
+          <ApplicationSummary
+            trade={trade}
+            description={description}
+            zone={zone}
+            image={photos[0]}
+          />
           {workers.map((worker) => (
-            <WorkerCard key={worker.id} worker={worker} onChoose={() => go("chosen")} />
+            <WorkerCard
+              key={worker.id}
+              worker={worker}
+              trade={trade}
+              onChoose={() => go("chosen")}
+            />
           ))}
         </div>
       );
@@ -279,12 +338,12 @@ function Laburapp() {
       return (
         <Success
           icon={<BadgeCheck />}
-          title="Elegiste a Carlos"
+          title={`Elegiste a ${workers[0].name.split(" ")[0]}`}
           text="Coordiná el día y los detalles directamente por WhatsApp."
           action="Hablar por WhatsApp"
           actionIcon={<MessageCircle />}
           whatsapp
-          href={`https://wa.me/${workers[0].phone}?text=${encodeURIComponent("Hola Carlos, te elegí para mi trabajo de electricidad en Laburapp.")}`}
+          href={`https://wa.me/${workers[0].phone}?text=${encodeURIComponent(`Hola Carlos, te elegí para mi trabajo de ${trade.toLocaleLowerCase("es-AR")} en Laburapp.`)}`}
           secondary="Calificar trabajo terminado"
           onSecondary={() => go("rating")}
         />
@@ -354,21 +413,23 @@ function Laburapp() {
             <div>
               <strong>Hola, {name.split(" ")[0]}</strong>
               <span>
-                {trade} · {zone}
+                {workerTrades.join(", ")} · {zone}
               </span>
             </div>
             <BadgeCheck />
           </div>
-          {jobs.map((job) => (
-            <JobCard
-              key={job.id}
-              job={job}
-              onOpen={() => {
-                setJobId(job.id);
-                go("job");
-              }}
-            />
-          ))}
+          {jobs
+            .filter((job) => job.id > 0 && workerTrades.includes(job.trade))
+            .map((job) => (
+              <JobCard
+                key={job.id}
+                job={job}
+                onOpen={() => {
+                  setJobId(job.id);
+                  go("job");
+                }}
+              />
+            ))}
         </div>
       );
     if (screen === "job")
@@ -403,6 +464,17 @@ function Laburapp() {
     if (screen === "offer")
       return (
         <FormScreen hint={`El vecino ofreció ${money(currentJob.price)}.`}>
+          <Button
+            variant="action"
+            size="lg"
+            onClick={() => {
+              setOffer(String(currentJob.price));
+              go("offered");
+            }}
+          >
+            <Check />
+            Lo hago por {money(currentJob.price)}
+          </Button>
           <FieldLabel icon={<WalletCards />}>Tu precio final</FieldLabel>
           <div className="money-input">
             <span>$</span>
@@ -649,7 +721,12 @@ function Success({
   secondary?: string;
   onSecondary?: () => void;
 }) {
-  const button = (
+  const button = href ? (
+    <a className="whatsapp-link" href={href} target="_blank" rel="noreferrer">
+      {actionIcon ?? <ChevronRight />}
+      {action}
+    </a>
+  ) : (
     <Button variant={whatsapp ? "whatsapp" : "action"} size="lg" onClick={onAction}>
       {actionIcon ?? <ChevronRight />}
       {action}
@@ -661,13 +738,7 @@ function Success({
       <h1>{title}</h1>
       <p>{text}</p>
       <div className="success-actions">
-        {href ? (
-          <a href={href} target="_blank" rel="noreferrer">
-            {button}
-          </a>
-        ) : (
-          button
-        )}
+        {button}
         {secondary && (
           <Button variant="outline" size="lg" onClick={onSecondary}>
             <Star />
@@ -680,9 +751,11 @@ function Success({
 }
 function WorkerCard({
   worker,
+  trade,
   onChoose,
 }: {
   worker: (typeof workers)[number];
+  trade: string;
   onChoose: () => void;
 }) {
   return (
@@ -693,7 +766,13 @@ function WorkerCard({
           <h2>{worker.name}</h2>
           {worker.verified && <BadgeCheck />}
         </div>
-        <span>{worker.trade}</span>
+        <span>{trade === "Otro" ? "Trabajador de oficio" : trade}</span>
+        {worker.verified && (
+          <span className="verified-label">
+            <BadgeCheck />
+            Verificado
+          </span>
+        )}
         <div className="worker-meta">
           <b>
             <Star />
