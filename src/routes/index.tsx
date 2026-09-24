@@ -627,7 +627,7 @@ function TradeGrid({
   selected,
   onSelect,
 }: {
-  selected: string;
+  selected: string[];
   onSelect: (value: string) => void;
 }) {
   return (
@@ -635,14 +635,14 @@ function TradeGrid({
       {trades.map(({ name, icon: Icon, tone }) => (
         <button
           key={name}
-          className={selected === name ? "selected" : ""}
+          className={selected.includes(name) ? "selected" : ""}
           onClick={() => onSelect(name)}
         >
           <span className={tone}>
             <Icon />
           </span>
           <strong>{name}</strong>
-          {selected === name && <Check className="trade-check" />}
+          {selected.includes(name) && <Check className="trade-check" />}
         </button>
       ))}
     </div>
@@ -789,6 +789,29 @@ function WorkerCard({
           <Check />
           Elegir
         </Button>
+      </div>
+    </article>
+  );
+}
+function ApplicationSummary({
+  trade,
+  description,
+  zone,
+  image,
+}: {
+  trade: string;
+  description: string;
+  zone: string;
+  image: string | undefined;
+}) {
+  const matchingImage = jobs.find((job) => job.trade === trade)?.image ?? jobs[1].image;
+  return (
+    <article className="application-summary">
+      <img src={image ?? matchingImage} alt={description} width={1024} height={768} />
+      <div>
+        <span className="trade-pill">{trade}</span>
+        <strong>{description}</strong>
+        <span><MapPin />{zone}</span>
       </div>
     </article>
   );
