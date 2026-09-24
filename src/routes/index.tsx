@@ -74,18 +74,26 @@ function Laburapp() {
   const [zone, setZone] = useState("Centro");
   const [timing, setTiming] = useState("Esta semana");
   const [description, setDescription] = useState("Cambiar tres tomas y revisar la térmica");
-  const [budget, setBudget] = useState("55000");
+  const [budget, setBudget] = useState("");
   const [phone, setPhone] = useState("4123456");
   const [code, setCode] = useState("");
   const [name, setName] = useState("Juan Pérez");
   const [invoice, setInvoice] = useState(true);
   const [photos, setPhotos] = useState<string[]>([]);
   const [jobId, setJobId] = useState(1);
-  const [offer, setOffer] = useState("45000");
+  const [offer, setOffer] = useState("");
+  const [myOffers, setMyOffers] = useState<Record<number, { price: number; status: string }>>({
+    2: { price: 180000, status: "Elegido" },
+  });
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const currentJob = jobs.find((item) => item.id === jobId) ?? jobs[1];
+  const recordMyOffer = (price: number) =>
+    setMyOffers((old) => ({
+      ...old,
+      [currentJob.id]: { price, status: "Esperando respuesta" },
+    }));
   const go = (next: Screen) => {
     setHistory((old) => [...old, screen]);
     setScreen(next);
@@ -204,7 +212,7 @@ function Laburapp() {
       );
     if (screen === "trade" || screen === "workerTrade")
       return (
-        <FormScreen hint={screen === "trade" ? "Tocá una opción." : "Elegí tu oficio principal."}>
+        <FormScreen hint={screen === "trade" ? "Tocá una opción." : "Tocá todos los que hacés."}>
           {screen === "trade" ? (
             <TradeGrid selected={[trade]} onSelect={chooseClientTrade} />
           ) : (
@@ -269,7 +277,6 @@ function Laburapp() {
     if (screen === "when")
       return (
         <FormScreen>
-          <FieldLabel icon={<Clock3 />}>¿Para cuándo?</FieldLabel>
           <ChoiceList
             options={timings}
             value={timing}
@@ -343,7 +350,7 @@ function Laburapp() {
           action="Hablar por WhatsApp"
           actionIcon={<MessageCircle />}
           whatsapp
-          href={`https://wa.me/${workers[0].phone}?text=${encodeURIComponent(`Hola Carlos, te elegí para mi trabajo de ${trade.toLocaleLowerCase("es-AR")} en Laburapp.`)}`}
+          href={`https://wa.me/${workers[0].phone}?text=${encodeURIComponent(`Hola ${workers[0].name.split(" ")[0]}, te elegí para ${description} en Laburapp.`)}`}
           secondary="Calificar trabajo terminado"
           onSecondary={() => go("rating")}
         />
@@ -456,7 +463,13 @@ function Laburapp() {
               </span>
             </div>
           </div>
-          <BottomAction onClick={() => go("offer")} icon={<BriefcaseBusiness />}>
+          <BottomAction
+            onClick={() => {
+              setOffer("");
+              go("offer");
+            }}
+            icon={<BriefcaseBusiness />}
+          >
             Me interesa
           </BottomAction>
         </div>
@@ -469,6 +482,7 @@ function Laburapp() {
             size="lg"
             onClick={() => {
               setOffer(String(currentJob.price));
+              recordMyOffer(currentJob.price);
               go("offered");
             }}
           >
@@ -486,7 +500,14 @@ function Laburapp() {
               onChange={(e) => setOffer(e.target.value.replace(/\D/g, ""))}
             />
           </div>
-          <BottomAction disabled={!offer} onClick={() => go("offered")} icon={<Send />}>
+          <BottomAction
+            disabled={!offer}
+            onClick={() => {
+              recordMyOffer(Number(offer));
+              go("offered");
+            }}
+            icon={<Send />}
+          >
             Mandar oferta
           </BottomAction>
         </FormScreen>
